@@ -1,7 +1,9 @@
 # rabbitmq-clustering
 
-Testing Clustering setup for rabbitmq.
-This repo is based on the work by [pardahlman](https://github.com/pardahlman/docker-rabbitmq-cluster).
+This branch is based on an example from [rabbitmq-peer-discovery-consul](https://github.com/rabbitmq/rabbitmq-peer-discovery-consul/) repo.
 
-## Additions
-* HAProxy will log to stdout
+## Usage
+To start the cluster:
+```
+docker stack deploy -c docker-compose.yml rabbitmq
+```

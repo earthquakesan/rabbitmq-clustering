@@ -1,46 +1,30 @@
 version: '3'
 
 services:
-  rabbitmq1:
-    image: rabbitmq:3-management
-    hostname: rabbitmq1
-    environment:
-      - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE}
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
-      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_DEFAULT_VHOST}
+  consul:
+    image: consul:1.2.2
 
-  rabbitmq2:
-    image: rabbitmq:3-management
-    hostname: rabbitmq2
-    depends_on:
-      - rabbitmq1
+  rabbit:
+    image: earthquakesan/rabbitmq:feature_consul
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 5
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+      #mode: global
+      placement:
+        constraints: 
+          - "node.labels.org.hobbit.type == worker"
     environment:
-      - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE}
-    volumes:
-      - ./cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh
-    entrypoint: /usr/local/bin/cluster-entrypoint.sh
-
-  rabbitmq3:
-    image: rabbitmq:3-management
-    hostname: rabbitmq3
-    depends_on:
-      - rabbitmq1
-    environment:
-      - RABBITMQ_ERLANG_COOKIE=${RABBITMQ_ERLANG_COOKIE}
-    volumes:
-      - ./cluster-entrypoint.sh:/usr/local/bin/cluster-entrypoint.sh
-    entrypoint: /usr/local/bin/cluster-entrypoint.sh
-    
-  haproxy:
-    image: haproxy:1.8-alpine
-    volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-    depends_on:
-      - rabbitmq1
-      - rabbitmq2
-      - rabbitmq3
-    command: /bin/sh -c "/sbin/syslogd -O /dev/stdout && haproxy -f /usr/local/etc/haproxy/haproxy.cfg"
+      - RABBITMQ_ERLANG_COOKIE="s3CR3tc00k13"  
     ports:
       - 15672:15672
-      - 5672:5672
+    command: sh -c "sleep 10; rabbitmq-server;"
+
+networks:
+  default:
+    driver: overlay
